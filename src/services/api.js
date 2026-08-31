@@ -1,4 +1,4 @@
-const API_URL = "/api";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 export async function getProductos({
   page = 0,
@@ -14,7 +14,9 @@ export async function getProductos({
     params.append("nombre", nombre);
   }
 
-  const respuesta = await fetch(`${API_URL}/productos?${params}`);
+  const respuesta = await fetch(
+    `${BASE_URL}/productos?${params}`
+  );
 
   if (!respuesta.ok) {
     throw new Error("Error al consultar el backend");
