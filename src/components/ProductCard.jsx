@@ -1,8 +1,9 @@
-export default function ProductCard({ producto }) {
+export default function ProductCard({ producto, onAgregar }) {
   return (
     <div className="overflow-hidden rounded-lg bg-white shadow-md">
 
       <div className="p-4">
+
         <h3 className="text-lg font-semibold text-gray-900">
           {producto.nombre}
         </h3>
@@ -16,12 +17,20 @@ export default function ProductCard({ producto }) {
         </p>
 
         <p className="mt-2 text-gray-600">
-          Garantía: {producto.garantia_meses} meses
+          GarantÃ­a: {producto.garantia_meses} meses
         </p>
 
-        <button className="mt-4 w-full rounded-lg bg-black px-4 py-2 font-semibold text-white transition hover:bg-gray-800">
+        <p className="mt-2 text-gray-600">
+          Stock: {producto.stock}
+        </p>
+
+        <button
+          onClick={() => onAgregar(producto)}
+          className="mt-4 w-full rounded-lg bg-black px-4 py-2 font-semibold text-white transition hover:bg-gray-800"
+        >
           Agregar al carrito
         </button>
+
       </div>
 
     </div>
