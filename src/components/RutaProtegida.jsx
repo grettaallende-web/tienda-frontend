@@ -1,24 +1,60 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import {
+    Navigate,
+    Outlet
+} from "react-router-dom";
 
-export default function RutaProtegida({ rol }) {
-    const { usuario, cargando } = useAuth();
+import {
+    useAuth
+} from "../context/AuthContext";
+
+
+function RutaProtegida({ rol }) {
+
+    const {
+        usuario,
+        cargando
+    } = useAuth();
+
 
     if (cargando) {
+
         return (
-            <p className="p-8">
+            <div className="pantalla-cargando">
                 Cargando...
-            </p>
+            </div>
         );
+
     }
+
 
     if (!usuario) {
-        return <Navigate to="/login" replace />;
+
+        return (
+            <Navigate
+                to="/login"
+                replace
+            />
+        );
+
     }
 
-    if (rol && usuario.rol !== rol) {
-        return <Navigate to="/" replace />;
+
+    if (
+        rol &&
+        usuario.rol !== rol
+    ) {
+
+        return (
+            <Navigate
+                to="/"
+                replace
+            />
+        );
+
     }
+
 
     return <Outlet />;
 }
+
+export default RutaProtegida;

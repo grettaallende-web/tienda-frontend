@@ -1,42 +1,65 @@
-import { Routes, Route } from "react-router-dom";
+import "./App.css";
 
-import { AuthProvider } from "./context/AuthContext";
+import {
+  Routes,
+  Route
+} from "react-router-dom";
+
+import {
+  AuthProvider
+} from "./context/AuthContext";
 
 import Catalogo from "./pages/Catalogo";
 import Login from "./pages/Login";
 import Registro from "./pages/Registro";
 import MiCuenta from "./pages/MiCuenta";
 import PanelAdmin from "./pages/PanelAdmin";
+import ProductoDetalle from "./pages/ProductoDetalle";
 
 import RutaProtegida from "./components/RutaProtegida";
+
 
 function App() {
   return (
     <AuthProvider>
+
       <Routes>
 
+        {/* Página principal */}
         <Route
           path="/"
           element={<Catalogo />}
         />
 
+        {/* Detalle del producto */}
+        <Route
+          path="/producto/:id"
+          element={<ProductoDetalle />}
+        />
+
+        {/* Login */}
         <Route
           path="/login"
           element={<Login />}
         />
 
+        {/* Registro */}
         <Route
           path="/registro"
           element={<Registro />}
         />
 
-        <Route element={<RutaProtegida />}>
+        {/* Mi cuenta */}
+        <Route
+          element={<RutaProtegida />}
+        >
           <Route
             path="/mi-cuenta"
             element={<MiCuenta />}
           />
         </Route>
 
+        {/* Administrador */}
         <Route
           element={
             <RutaProtegida rol="admin" />
@@ -48,7 +71,14 @@ function App() {
           />
         </Route>
 
+        {/* Ruta desconocida */}
+        <Route
+          path="*"
+          element={<Catalogo />}
+        />
+
       </Routes>
+
     </AuthProvider>
   );
 }
