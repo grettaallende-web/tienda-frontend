@@ -9,6 +9,7 @@ import {
 } from "../services/api";
 
 import { useAuth } from "../context/AuthContext";
+import { useCarrito } from "../context/CarritoContext";
 
 
 function Catalogo() {
@@ -17,8 +18,19 @@ function Catalogo() {
 
     const { usuario } = useAuth();
 
-    const [productos, setProductos] = useState([]);
-    const [carrito, setCarrito] = useState([]);
+    const {
+        items: carrito,
+        aumentar,
+        disminuir,
+        quitar,
+        vaciar,
+        total: totalCarrito,
+        cantidadTotal
+    } = useCarrito();
+
+
+    const [productos, setProductos] =
+        useState([]);
 
     const [mostrarCarrito, setMostrarCarrito] =
         useState(false);
@@ -38,10 +50,13 @@ function Catalogo() {
     const [error, setError] =
         useState("");
 
+    const [enviando, setEnviando] =
+        useState(false);
 
-    /* =========================================
-       CARGAR PRODUCTOS
-    ========================================== */
+
+    // =========================================
+    // CARGAR PRODUCTOS
+    // =========================================
 
     async function cargarProductos() {
 
@@ -67,181 +82,29 @@ function Catalogo() {
 
         } catch (error) {
 
-            setError(error.message);
+            setError(
+                error.message
+            );
 
         } finally {
 
             setCargando(false);
 
         }
+
     }
 
 
     useEffect(() => {
+
         cargarProductos();
+
     }, [page, busqueda]);
 
 
-    /* =========================================
-       AGREGAR AL CARRITO
-    ========================================== */
-
-    function agregarAlCarrito(producto) {
-
-        setCarrito((carritoActual) => {
-
-            const existente =
-                carritoActual.find(
-                    (item) =>
-                        item.id === producto.id
-                );
-
-            if (existente) {
-
-                if (
-                    existente.cantidad >=
-                    producto.stock
-                ) {
-
-                    alert(
-                        "No hay más stock disponible."
-                    );
-
-                    return carritoActual;
-                }
-
-                alert(
-                    `"${producto.nombre}" se agregó al carrito.`
-                );
-
-                return carritoActual.map(
-                    (item) =>
-                        item.id === producto.id
-                            ? {
-                                ...item,
-                                cantidad:
-                                    item.cantidad + 1
-                            }
-                            : item
-                );
-            }
-
-            alert(
-                `"${producto.nombre}" se agregó al carrito.`
-            );
-
-            return [
-                ...carritoActual,
-                {
-                    ...producto,
-                    cantidad: 1
-                }
-            ];
-        });
-    }
-
-
-    /* =========================================
-       ELIMINAR
-    ========================================== */
-
-    function eliminarDelCarrito(id) {
-
-        setCarrito(
-            (carritoActual) =>
-                carritoActual.filter(
-                    (producto) =>
-                        producto.id !== id
-                )
-        );
-    }
-
-
-    /* =========================================
-       CAMBIAR CANTIDAD
-    ========================================== */
-
-    function cambiarCantidad(
-        id,
-        cantidad
-    ) {
-
-        if (cantidad < 1) {
-            return;
-        }
-
-        setCarrito(
-            (carritoActual) =>
-                carritoActual.map(
-                    (producto) => {
-
-                        if (
-                            producto.id !== id
-                        ) {
-                            return producto;
-                        }
-
-                        if (
-                            cantidad >
-                            producto.stock
-                        ) {
-
-                            alert(
-                                `Solo quedan ${producto.stock} unidades.`
-                            );
-
-                            return producto;
-                        }
-
-                        return {
-                            ...producto,
-                            cantidad
-                        };
-                    }
-                )
-        );
-    }
-
-
-    /* =========================================
-       TOTAL
-    ========================================== */
-
-    const totalCarrito =
-        carrito.reduce(
-            (total, producto) => {
-
-                return (
-                    total +
-                    Number(
-                        producto.precio_final
-                    ) *
-                    Number(
-                        producto.cantidad
-                    )
-                );
-
-            },
-            0
-        );
-
-
-    /* =========================================
-       CANTIDAD CARRITO
-    ========================================== */
-
-    const cantidadCarrito =
-        carrito.reduce(
-            (total, producto) =>
-                total +
-                Number(producto.cantidad),
-            0
-        );
-
-
-    /* =========================================
-       FINALIZAR COMPRA
-    ========================================== */
+    // =========================================
+    // FINALIZAR COMPRA
+    // =========================================
 
     async function finalizarCompra() {
 
@@ -255,9 +118,6 @@ function Catalogo() {
         }
 
 
-        /* Si no está logueado,
-           lo mandamos al login */
-
         if (!usuario) {
 
             alert(
@@ -270,25 +130,35 @@ function Catalogo() {
         }
 
 
+        if (enviando) {
+            return;
+        }
+
+
         try {
 
+            setEnviando(true);
+
             const pedido =
-                await crearPedido(
-                    carrito
-                );
+                await crearPedido(carrito);
+
 
             alert(
                 `¡Compra realizada correctamente!\n\n` +
                 `Pedido: #${pedido.id}\n` +
                 `Total: $${Number(
                     pedido.total
-                ).toLocaleString("es-AR", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                })}`
+                ).toLocaleString(
+                    "es-AR",
+                    {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }
+                )}`
             );
 
-            setCarrito([]);
+
+            vaciar();
 
             setMostrarCarrito(false);
 
@@ -296,15 +166,22 @@ function Catalogo() {
 
         } catch (error) {
 
-            alert(error.message);
+            alert(
+                error.message
+            );
+
+        } finally {
+
+            setEnviando(false);
 
         }
+
     }
 
 
-    /* =========================================
-       BUSCADOR
-    ========================================== */
+    // =========================================
+    // BUSCADOR
+    // =========================================
 
     function cambiarBusqueda(event) {
 
@@ -313,12 +190,13 @@ function Catalogo() {
         );
 
         setPage(0);
+
     }
 
 
-    /* =========================================
-       PANTALLA CARGANDO
-    ========================================== */
+    // =========================================
+    // CARGANDO
+    // =========================================
 
     if (cargando) {
 
@@ -335,12 +213,13 @@ function Catalogo() {
 
             </main>
         );
+
     }
 
 
-    /* =========================================
-       PANTALLA ERROR
-    ========================================== */
+    // =========================================
+    // ERROR
+    // =========================================
 
     if (error) {
 
@@ -363,25 +242,28 @@ function Catalogo() {
 
             </main>
         );
+
     }
 
 
-    /* =========================================
-       PÁGINA
-    ========================================== */
+    // =========================================
+    // PÁGINA
+    // =========================================
 
     return (
         <main className="catalogo">
 
-            {/* ===================================
-          ENCABEZADO
-      =================================== */}
+
+            {/* =================================
+                ENCABEZADO
+            ================================= */}
 
             <header className="catalogo-header">
 
                 <h1>
                     Mi Tienda
                 </h1>
+
 
                 <div className="acciones-header">
 
@@ -390,7 +272,9 @@ function Catalogo() {
                         <button
                             className="boton-cuenta"
                             onClick={() =>
-                                navigate("/mi-cuenta")
+                                navigate(
+                                    "/mi-cuenta"
+                                )
                             }
                         >
                             👤 Mi cuenta
@@ -401,13 +285,16 @@ function Catalogo() {
                         <button
                             className="boton-cuenta"
                             onClick={() =>
-                                navigate("/login")
+                                navigate(
+                                    "/login"
+                                )
                             }
                         >
                             Iniciar sesión
                         </button>
 
                     )}
+
 
                     <button
                         className="boton-carrito-header"
@@ -418,7 +305,7 @@ function Catalogo() {
                         }
                     >
                         🛒 Ver carrito (
-                        {cantidadCarrito}
+                        {cantidadTotal}
                         )
                     </button>
 
@@ -427,13 +314,14 @@ function Catalogo() {
             </header>
 
 
-            {/* ===================================
-          CARRITO
-      =================================== */}
+            {/* =================================
+                CARRITO
+            ================================= */}
 
             {mostrarCarrito ? (
 
                 <section className="carrito">
+
 
                     <div className="carrito-header">
 
@@ -441,10 +329,13 @@ function Catalogo() {
                             🛒 Carrito
                         </h2>
 
+
                         <button
                             className="boton-volver-productos"
                             onClick={() =>
-                                setMostrarCarrito(false)
+                                setMostrarCarrito(
+                                    false
+                                )
                             }
                         >
                             Volver a productos
@@ -468,21 +359,41 @@ function Catalogo() {
 
                                     const precio =
                                         Number(
-                                            producto.precio_final
+                                            producto.precio
                                         );
+
+
+                                    const cantidad =
+                                        Number(
+                                            producto.cantidad
+                                        );
+
+
+                                    const subtotal =
+                                        precio *
+                                        cantidad;
+
 
                                     return (
 
                                         <div
                                             className="item-carrito"
-                                            key={producto.id}
+                                            key={
+                                                producto.producto_id
+                                            }
                                         >
+
+
+                                            {/* INFORMACIÓN */}
 
                                             <div>
 
                                                 <strong>
-                                                    {producto.nombre}
+                                                    {
+                                                        producto.nombre
+                                                    }
                                                 </strong>
+
 
                                                 <p>
                                                     $
@@ -495,33 +406,54 @@ function Catalogo() {
                                                     )}
                                                 </p>
 
+
+                                                <p>
+                                                    Cantidad:{" "}
+                                                    {cantidad}
+                                                </p>
+
+
+                                                <p>
+                                                    Subtotal: $
+                                                    {subtotal.toLocaleString(
+                                                        "es-AR",
+                                                        {
+                                                            minimumFractionDigits: 2,
+                                                            maximumFractionDigits: 2
+                                                        }
+                                                    )}
+                                                </p>
+
                                             </div>
 
 
+                                            {/* CONTROLES */}
+
                                             <div className="controles-carrito">
 
+
                                                 <button
+                                                    type="button"
                                                     onClick={() =>
-                                                        cambiarCantidad(
-                                                            producto.id,
-                                                            producto.cantidad - 1
+                                                        disminuir(
+                                                            producto.producto_id
                                                         )
                                                     }
                                                 >
-                                                    -
+                                                    −
                                                 </button>
 
 
                                                 <span>
-                                                    {producto.cantidad}
+                                                    {cantidad}
                                                 </span>
 
 
                                                 <button
+                                                    type="button"
                                                     onClick={() =>
-                                                        cambiarCantidad(
-                                                            producto.id,
-                                                            producto.cantidad + 1
+                                                        aumentar(
+                                                            producto.producto_id
                                                         )
                                                     }
                                                 >
@@ -530,43 +462,65 @@ function Catalogo() {
 
 
                                                 <button
+                                                    type="button"
                                                     onClick={() =>
-                                                        eliminarDelCarrito(
-                                                            producto.id
+                                                        quitar(
+                                                            producto.producto_id
                                                         )
                                                     }
                                                 >
-                                                    Eliminar
+                                                    ❌ Eliminar
                                                 </button>
+
 
                                             </div>
 
                                         </div>
 
                                     );
+
                                 }
                             )}
 
 
+                            {/* TOTAL */}
+
                             <div className="total-carrito">
 
-                                Total: $
-                                {totalCarrito.toLocaleString(
-                                    "es-AR",
-                                    {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2
-                                    }
-                                )}
+                                <strong>
+
+                                    Total: $
+                                    {Number(
+                                        totalCarrito
+                                    ).toLocaleString(
+                                        "es-AR",
+                                        {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        }
+                                    )}
+
+                                </strong>
 
                             </div>
 
 
+                            {/* FINALIZAR */}
+
                             <button
                                 className="boton-finalizar"
-                                onClick={finalizarCompra}
+                                onClick={
+                                    finalizarCompra
+                                }
+                                disabled={
+                                    enviando
+                                }
                             >
-                                Finalizar compra
+
+                                {enviando
+                                    ? "Procesando..."
+                                    : "Finalizar compra"}
+
                             </button>
 
                         </>
@@ -577,20 +531,27 @@ function Catalogo() {
 
             ) : (
 
-                /* =================================
-                   PRODUCTOS
-                ================================= */
-
                 <>
+
+
+                    {/* =================================
+                        BUSCADOR
+                    ================================= */}
 
                     <input
                         className="buscador"
                         type="text"
                         placeholder="Buscar productos..."
                         value={busqueda}
-                        onChange={cambiarBusqueda}
+                        onChange={
+                            cambiarBusqueda
+                        }
                     />
 
+
+                    {/* =================================
+                        PRODUCTOS
+                    ================================= */}
 
                     {productos.length === 0 ? (
 
@@ -606,10 +567,11 @@ function Catalogo() {
                                 (producto) => (
 
                                     <ProductCard
-                                        key={producto.id}
-                                        producto={producto}
-                                        onAgregar={
-                                            agregarAlCarrito
+                                        key={
+                                            producto.id
+                                        }
+                                        producto={
+                                            producto
                                         }
                                     />
 
@@ -622,13 +584,15 @@ function Catalogo() {
 
 
                     {/* =================================
-              PAGINACIÓN
-          ================================= */}
+                        PAGINACIÓN
+                    ================================= */}
 
                     <div className="paginacion">
 
                         <button
-                            disabled={page === 0}
+                            disabled={
+                                page === 0
+                            }
                             onClick={() =>
                                 setPage(
                                     page - 1
@@ -645,7 +609,9 @@ function Catalogo() {
 
 
                         <button
-                            disabled={!haySiguiente}
+                            disabled={
+                                !haySiguiente
+                            }
                             onClick={() =>
                                 setPage(
                                     page + 1
@@ -664,5 +630,6 @@ function Catalogo() {
         </main>
     );
 }
+
 
 export default Catalogo;

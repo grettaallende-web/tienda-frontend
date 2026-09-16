@@ -1,84 +1,86 @@
 import "./App.css";
 
-import {
-  Routes,
-  Route
-} from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
-import {
-  AuthProvider
-} from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
+import { CarritoProvider } from "./context/CarritoContext";
 
 import Catalogo from "./pages/Catalogo";
 import Login from "./pages/Login";
 import Registro from "./pages/Registro";
 import MiCuenta from "./pages/MiCuenta";
+import MisDatos from "./pages/MisDatos";
+import MisPedidos from "./pages/MisPedidos";
 import PanelAdmin from "./pages/PanelAdmin";
 import ProductoDetalle from "./pages/ProductoDetalle";
 
 import RutaProtegida from "./components/RutaProtegida";
 
-
 function App() {
   return (
     <AuthProvider>
+      <CarritoProvider>
+        <Routes>
 
-      <Routes>
-
-        {/* Página principal */}
-        <Route
-          path="/"
-          element={<Catalogo />}
-        />
-
-        {/* Detalle del producto */}
-        <Route
-          path="/producto/:id"
-          element={<ProductoDetalle />}
-        />
-
-        {/* Login */}
-        <Route
-          path="/login"
-          element={<Login />}
-        />
-
-        {/* Registro */}
-        <Route
-          path="/registro"
-          element={<Registro />}
-        />
-
-        {/* Mi cuenta */}
-        <Route
-          element={<RutaProtegida />}
-        >
+          {/* Catálogo */}
           <Route
-            path="/mi-cuenta"
-            element={<MiCuenta />}
+            path="/"
+            element={<Catalogo />}
           />
-        </Route>
 
-        {/* Administrador */}
-        <Route
-          element={
-            <RutaProtegida rol="admin" />
-          }
-        >
+          {/* Detalle de producto */}
           <Route
-            path="/admin"
-            element={<PanelAdmin />}
+            path="/producto/:id"
+            element={<ProductoDetalle />}
           />
-        </Route>
 
-        {/* Ruta desconocida */}
-        <Route
-          path="*"
-          element={<Catalogo />}
-        />
+          {/* Autenticación */}
+          <Route
+            path="/login"
+            element={<Login />}
+          />
 
-      </Routes>
+          <Route
+            path="/registro"
+            element={<Registro />}
+          />
 
+          {/* Rutas protegidas */}
+          <Route element={<RutaProtegida />}>
+
+            <Route
+              path="/mi-cuenta"
+              element={<MiCuenta />}
+            />
+
+            <Route
+              path="/mis-datos"
+              element={<MisDatos />}
+            />
+
+            <Route
+              path="/mis-pedidos"
+              element={<MisPedidos />}
+            />
+
+          </Route>
+
+          {/* Panel de administrador */}
+          <Route element={<RutaProtegida rol="admin" />}>
+            <Route
+              path="/admin"
+              element={<PanelAdmin />}
+            />
+          </Route>
+
+          {/* Ruta inexistente */}
+          <Route
+            path="*"
+            element={<Catalogo />}
+          />
+
+        </Routes>
+      </CarritoProvider>
     </AuthProvider>
   );
 }

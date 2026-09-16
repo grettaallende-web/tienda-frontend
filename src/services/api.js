@@ -241,7 +241,7 @@ export async function crearPedido(items) {
 
       body: JSON.stringify({
         items: items.map((item) => ({
-          producto_id: item.id,
+          producto_id: item.producto_id,
           cantidad: item.cantidad
         }))
       })
@@ -272,9 +272,16 @@ export async function crearPedido(items) {
       );
     }
 
+    if (respuesta.status === 422) {
+      throw new Error(
+        "Los datos del pedido no son válidos."
+      );
+    }
+
     throw new Error(
-      datos.detail ||
-      "Error al realizar la compra."
+      typeof datos.detail === "string"
+        ? datos.detail
+        : "Error al realizar la compra."
     );
   }
 
@@ -329,6 +336,140 @@ export async function getPedido(id) {
     throw new Error(
       datos.detail ||
       "No se pudo cargar el pedido."
+    );
+  }
+
+  return datos;
+}
+
+
+/* =========================================
+   CLASE 9 - REVOCACIÓN
+========================================= */
+
+export async function revocarPedido(pedidoId) {
+  const respuesta = await fetch(
+    `${BASE_URL}/pedidos/${pedidoId}/revocacion`,
+    {
+      method: "POST",
+
+      headers: {
+        ...authHeaders()
+      }
+    }
+  );
+
+  const datos = await respuesta.json();
+
+  if (!respuesta.ok) {
+    if (respuesta.status === 404) {
+      throw new Error(
+        datos.detail ||
+        "No existe ese pedido."
+      );
+    }
+
+    if (respuesta.status === 409) {
+      throw new Error(
+        datos.detail ||
+        "Este pedido ya no se puede revocar."
+      );
+    }
+
+    throw new Error(
+      datos.detail ||
+      "No se pudo revocar el pedido."
+    );
+  }
+
+  return datos;
+}
+
+
+/* =========================================
+   CLASE 9 - MIS DATOS
+========================================= */
+
+export async function getMisDatos() {
+  const respuesta = await fetch(
+    `${BASE_URL}/usuarios/me/datos`,
+    {
+      headers: {
+        ...authHeaders()
+      }
+    }
+  );
+
+  const datos = await respuesta.json();
+
+  if (!respuesta.ok) {
+    throw new Error(
+      datos.detail ||
+      "No se pudieron obtener tus datos."
+    );
+  }
+
+  return datos;
+}
+
+
+/* =========================================
+   CLASE 9 - EXPORTAR DATOS
+========================================= */
+
+export async function exportarMisDatos() {
+  const respuesta = await fetch(
+    `${BASE_URL}/usuarios/me/exportar`,
+    {
+      headers: {
+        ...authHeaders()
+      }
+    }
+  );
+
+  if (!respuesta.ok) {
+    throw new Error(
+      "No se pudieron exportar tus datos."
+    );
+  }
+
+  const blob = await respuesta.blob();
+
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = "mis-datos.json";
+
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+
+/* =========================================
+   CLASE 9 - ELIMINAR CUENTA
+========================================= */
+
+export async function eliminarMiCuenta() {
+  const respuesta = await fetch(
+    `${BASE_URL}/usuarios/me`,
+    {
+      method: "DELETE",
+
+      headers: {
+        ...authHeaders()
+      }
+    }
+  );
+
+  const datos = await respuesta.json();
+
+  if (!respuesta.ok) {
+    throw new Error(
+      datos.detail ||
+      "No se pudo eliminar la cuenta."
     );
   }
 

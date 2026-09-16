@@ -1,10 +1,13 @@
 import { useNavigate } from "react-router-dom";
+import { useCarrito } from "../context/CarritoContext";
 
-function ProductCard({ producto, onAgregar }) {
+function ProductCard({ producto }) {
   const navigate = useNavigate();
+  const { agregar } = useCarrito();
 
   const precio = Number(producto.precio_final);
   const cuota = Number(producto.cuotas_valor);
+  const stock = Number(producto.stock);
 
   function abrirProducto() {
     navigate(`/producto/${producto.id}`);
@@ -12,7 +15,8 @@ function ProductCard({ producto, onAgregar }) {
 
   function agregarAlCarrito(event) {
     event.stopPropagation();
-    onAgregar(producto);
+    agregar(producto);
+    alert(`"${producto.nombre}" se agregó al carrito.`);
   }
 
   return (
@@ -20,12 +24,8 @@ function ProductCard({ producto, onAgregar }) {
       className="product-card"
       onClick={abrirProducto}
     >
-
       <div className="product-card-content">
-
-        <h3>
-          {producto.nombre}
-        </h3>
+        <h3>{producto.nombre}</h3>
 
         <div className="product-price">
           $
@@ -36,7 +36,6 @@ function ProductCard({ producto, onAgregar }) {
         </div>
 
         <div className="product-info">
-
           <p>
             💳 {producto.cuotas_cantidad} cuotas de $
             {cuota.toLocaleString("es-AR", {
@@ -50,24 +49,21 @@ function ProductCard({ producto, onAgregar }) {
           </p>
 
           <p>
-            📦 Stock: {producto.stock}
+            📦 Stock: {stock}
           </p>
-
         </div>
-
       </div>
 
       <button
         type="button"
         className="add-cart-button"
         onClick={agregarAlCarrito}
-        disabled={producto.stock <= 0}
+        disabled={stock <= 0}
       >
-        {producto.stock > 0
+        {stock > 0
           ? "🛒 Agregar al carrito"
           : "Sin stock"}
       </button>
-
     </article>
   );
 }
